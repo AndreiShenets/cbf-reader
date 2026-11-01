@@ -54,6 +54,8 @@ Set `BROWSER_PATH` if the browser is not installed in a standard location. Optio
 python tests/test_reader_browser.py --archive "path/to/comic.cbz"
 ```
 
+To check whether a particular archive entry can be decoded by the browser, add `--image "chapter/page.png"`.
+
 ## Third-party software
 
 The bundled **zip.js 2.24.0** library is distributed under the **BSD 3-Clause License**. Its license is retained in [`vendor/LICENSE`](vendor/LICENSE) and embedded in the generated HTML. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

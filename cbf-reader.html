@@ -164,7 +164,7 @@ class CbzSource {
         return resources;
       } catch (error) {
         resources.forEach(url => URL.revokeObjectURL(url));
-        this.cache.delete(index);
+        if (this.cache.get(index) === work) this.cache.delete(index);
         throw error;
       }
     });
@@ -390,16 +390,18 @@ function addSection(index, urls) {
     image.src = urls[pageIndex];
     image.addEventListener('error', () => {
       // Released archive pages intentionally have no src until scrolled back.
-      if (image.hasAttribute('src')) {
+      // An error from a previous request may arrive after unloading or reuse.
+      if (image.isConnected && image.hasAttribute('src') && image.complete && !image.naturalWidth) {
         image.classList.add('failed');
         notify(`Cannot display ${page.filename}.`);
       }
     });
+    image.addEventListener('load', () => image.classList.remove('failed'));
     node.append(image);
     return image;
   });
   $('pages').append(node);
-  sections.set(index, { node, images: elements, loaded: true });
+  sections.set(index, { node, images: elements, loaded: true, loadVersion: 0 });
 }
 
 async function showChapter(index, bookmark) {
@@ -445,8 +447,11 @@ async function performAppend() {
   const version = navigationVersion;
   const activeSource = source;
   try {
-    const urls = await activeSource.prepare(index);
+    const pending = activeSource.prepare(index);
+    const owner = activeSource.cache.get(index);
+    const urls = await pending;
     if (version !== navigationVersion || source !== activeSource) return;
+    if (activeSource.cache.get(index) !== owner) return;
     addSection(index, urls);
     navigation();
   } catch (error) {
@@ -476,16 +481,20 @@ function refreshNearby() {
     if (Math.abs(index - current) <= 1) {
       if (!section.loaded) {
         section.loaded = true;
+        const loadVersion = ++section.loadVersion;
         activeSource.prepare(index).then(urls => {
           if (version !== navigationVersion || source !== activeSource) return;
+          if (!section.loaded || section.loadVersion !== loadVersion || sections.get(index) !== section) return;
           section.images.forEach((image, i) => { image.src = urls[i]; });
         }).catch(error => {
+          if (version !== navigationVersion || source !== activeSource || section.loadVersion !== loadVersion) return;
           section.loaded = false;
           if (error.name !== 'AbortError' && source === activeSource) notify(error.message);
         });
       }
     } else if (section.loaded) {
       section.loaded = false;
+      section.loadVersion++;
       section.images.forEach(image => image.removeAttribute('src'));
       activeSource.release(index);
     }
