@@ -1,0 +1,14 @@
+{
+  "name": "cbf-reader",
+  "private": true,
+  "description": "Portable offline CBZ comic reader in a single HTML file",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node build.mjs --update",
+    "test": "node --check src/reader.js && node --test tests/test-build.mjs && node tests/test-reader-browser.mjs",
+    "test:build": "node --test tests/test-build.mjs",
+    "test:browser": "node tests/test-reader-browser.mjs"
+  }
+}
