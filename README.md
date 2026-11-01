@@ -29,30 +29,35 @@ Reading positions and display preferences are stored locally in the browser. Cle
 
 ## Build
 
-Requires Python 3.10 or newer. No Python packages or network access are needed.
+Requires Node.js 22 or newer. No package installation or network access is needed.
 
 ```sh
-python build.py --update
+node build.mjs --update
 ```
 
-This rebuilds `cbf-reader.html` from `src/` and the vendored ZIP library. An existing output is backed up in `_download/`, which is ignored by Git. Use `--output PATH` to write elsewhere.
+This rebuilds `cbf-reader.html` from `src/` and the vendored ZIP library. `--update` overwrites the generated file without creating backups; Git tracks its history. Use `--output PATH` to write elsewhere.
+
+`npm run build` runs the same command.
 
 ## Test
 
-Requires Python 3.10 or newer, Node.js 22 or newer, and Chrome, Edge, or Chromium.
+Requires Node.js 22 or newer and Chrome, Edge, or Chromium. There are no npm dependencies.
 
 ```sh
-node --check src/reader.js
-python tests/test_reader_browser.py
+npm test
 ```
 
 The tests use synthetic comics and an isolated browser profile. They cover empty startup, English labels, reading controls, bookmarks, local file selection, ZIP64, and image-resource cleanup. No private comic files are needed.
 
+Run only build tests with `npm run test:build`, or browser tests with `npm run test:browser`.
+
 Set `BROWSER_PATH` if the browser is not installed in a standard location. Optionally test an existing local archive without adding it to the repository:
 
 ```sh
-python tests/test_reader_browser.py --archive "path/to/comic.cbz"
+node tests/test-reader-browser.mjs --archive "path/to/comic.cbz"
 ```
+
+To check whether a particular archive entry can be decoded by the browser, add `--image "chapter/page.png"`.
 
 ## Third-party software
 

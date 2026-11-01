@@ -2,7 +2,7 @@
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 
-const [url, profile, archiveFile] = process.argv.slice(2);
+const [url, profile, archiveFile, imageFile] = process.argv.slice(2);
 const candidates = [
   process.env.BROWSER_PATH,
   'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
@@ -107,6 +107,19 @@ try {
         assert(firstDimensions[0] > 0 && firstDimensions[1] > 0, 'image did not decode');
         const firstCachedImages = [...source.cache.keys()].reduce((count, index) => count + chapters[index].pages.length, 0);
         assert(firstCachedImages < 100, 'whole archive was decompressed');
+        let targetedImage = null;
+        const requestedImage = ${JSON.stringify(imageFile || null)};
+        if (requestedImage) {
+          const chapterIndex = chapters.findIndex(chapter => chapter.pages.some(page => page.filename === requestedImage));
+          assert(chapterIndex >= 0, 'requested image was not found in the archive');
+          const pageIndex = chapters[chapterIndex].pages.findIndex(page => page.filename === requestedImage);
+          const urls = await source.prepare(chapterIndex);
+          const image = new Image();
+          image.src = urls[pageIndex];
+          await image.decode();
+          targetedImage = {filename: requestedImage, width: image.naturalWidth, height: image.naturalHeight};
+          image.removeAttribute('src');
+        }
         const middle = Math.floor(chapters.length / 2);
         const targetPage = Math.min(2, chapters[middle].pages.length - 1);
         await showChapter(middle, {page: targetPage, offset: 0.25});
@@ -118,7 +131,7 @@ try {
         const report = {ok: true, actualFilePicker: true, chapters: chapters.length,
           totalImages: chapters.reduce((count, chapter) => count + chapter.pages.length, 0),
           firstCachedImages, cacheAfterNavigation: source.cache.size,
-          firstDimensions, lastChapter: chapters[current].number};
+          firstDimensions, lastChapter: chapters[current].number, targetedImage};
         const previousSource = source;
         await closeBook();
         assert(previousSource.closed && previousSource.cache.size === 0 && source === null, 'closing did not release archive');
