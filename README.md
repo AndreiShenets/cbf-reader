@@ -35,7 +35,7 @@ Requires Python 3.10 or newer. No Python packages or network access are needed.
 python build.py --update
 ```
 
-This rebuilds `cbf-reader.html` from `src/` and the vendored ZIP library. An existing output is backed up in `_download/`, which is ignored by Git. Use `--output PATH` to write elsewhere.
+This rebuilds `cbf-reader.html` from `src/` and the vendored ZIP library. `--update` overwrites the generated file without creating backups; Git tracks its history. Use `--output PATH` to write elsewhere.
 
 ## Test
 
@@ -43,6 +43,7 @@ Requires Python 3.10 or newer, Node.js 22 or newer, and Chrome, Edge, or Chromiu
 
 ```sh
 node --check src/reader.js
+python -m unittest discover -s tests -p test_build.py
 python tests/test_reader_browser.py
 ```
 
